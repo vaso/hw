@@ -1,4 +1,4 @@
-module github.com/vaso/hw/tree/master/hw01_hello_otus
+module github.com/vaso/hw/hw01_hello_otus
 
 go 1.22
 

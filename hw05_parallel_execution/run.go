@@ -40,6 +40,8 @@ func Run(tasks []Task, n int, m int) error {
 	}
 	wg.Wait()
 	localErrCount := <-errCountChan
+	close(errChan)
+	close(errCountChan)
 	if localErrCount >= m {
 		return ErrErrorsLimitExceeded
 	}
@@ -50,8 +52,7 @@ func producer(tasks []Task, tChan chan<- Task, errChan chan struct{}) {
 	for _, task := range tasks {
 		select {
 		case <-errChan: // read errChan for exit flag
-			close(tChan)
-			writeToErrChan(errChan)
+			close(tChan) // closing tasks channel is a flag for all consumers to stop.
 			return
 		case tChan <- task: // send task to tChan, blocking
 			continue
@@ -60,6 +61,7 @@ func producer(tasks []Task, tChan chan<- Task, errChan chan struct{}) {
 	close(tChan)
 }
 
+// push err flag to errChan. If it already has a flag, no need to push it again.
 func writeToErrChan(errChan chan struct{}) {
 	select {
 	case errChan <- struct{}{}:
@@ -71,6 +73,7 @@ func consumer(tChan <-chan Task, errChan chan struct{}, errCountChan chan int, m
 	for {
 		select {
 		case <-errChan:
+			writeToErrChan(errChan) // we read err flag, but we need to re-enable it until producer gets it.
 			return
 		case task, ok := <-tChan: // read task to execute, handle task
 			if !ok {

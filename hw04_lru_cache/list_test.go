@@ -3,7 +3,7 @@ package hw04lrucache
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require" //nolint:all
+	"github.com/stretchr/testify/require"
 )
 
 func TestList(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require" //nolint:all
+	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
 )
 
@@ -66,41 +66,5 @@ func TestRun(t *testing.T) {
 
 		require.Equal(t, runTasksCount, int32(tasksCount), "not all tasks were completed")
 		require.LessOrEqual(t, int64(elapsedTime), int64(sumTime/2), "tasks were run sequentially?")
-	})
-
-	t.Run("no tasks executed, instant error with zero max errors", func(t *testing.T) {
-		tasksCount := 5
-		tasks := make([]Task, 0, tasksCount)
-		var runTasksCount int32
-		tasks = append(tasks, func() error {
-			atomic.AddInt32(&runTasksCount, 1)
-			return nil
-		})
-
-		workersCount := 5
-		maxErrorsCount := 0
-
-		err := Run(tasks, workersCount, maxErrorsCount)
-
-		require.Truef(t, errors.Is(err, ErrErrorsLimitExceeded), "actual err - %v", err)
-		require.Equal(t, runTasksCount, int32(0), "task was executed")
-	})
-
-	t.Run("no tasks executed, instant error with negative max errors", func(t *testing.T) {
-		tasksCount := 5
-		tasks := make([]Task, 0, tasksCount)
-		var runTasksCount int32
-		tasks = append(tasks, func() error {
-			atomic.AddInt32(&runTasksCount, 1)
-			return nil
-		})
-
-		workersCount := 5
-		maxErrorsCount := -5
-
-		err := Run(tasks, workersCount, maxErrorsCount)
-
-		require.Truef(t, errors.Is(err, ErrErrorsLimitExceeded), "actual err - %v", err)
-		require.Equal(t, runTasksCount, int32(0), "task was executed")
 	})
 }

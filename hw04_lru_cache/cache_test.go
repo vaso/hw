@@ -6,7 +6,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/stretchr/testify/require" //nolint:all
+	"github.com/stretchr/testify/require"
 )
 
 func TestCache(t *testing.T) {
@@ -48,11 +48,10 @@ func TestCache(t *testing.T) {
 		require.False(t, ok)
 		require.Nil(t, val)
 	})
-	/*
-		t.Run("purge logic", func(t *testing.T) {
-			// Write me
-		})
-	*/
+
+	t.Run("purge logic", func(t *testing.T) {
+		// Write me
+	})
 }
 
 func TestCacheMultithreading(t *testing.T) {

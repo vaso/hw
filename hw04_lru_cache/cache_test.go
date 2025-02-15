@@ -48,15 +48,81 @@ func TestCache(t *testing.T) {
 		require.False(t, ok)
 		require.Nil(t, val)
 	})
-	/*
-		t.Run("purge logic", func(t *testing.T) {
-			// Write me
-		})
-	*/
+
+	t.Run("purge logic", func(t *testing.T) {
+		c := NewCache(2)
+
+		_ = c.Set("aaa", 100)
+		_ = c.Set("bbb", 200)
+		_ = c.Set("ccc", 300)
+
+		removed, ok := c.Get("aaa")
+		require.False(t, ok)
+		require.Nil(t, removed)
+	})
+
+	t.Run("purge less last active by read logic", func(t *testing.T) {
+		c := NewCache(2)
+
+		_ = c.Set("aaa", 100)
+		_ = c.Set("bbb", 200)
+		_, ok := c.Get("aaa") // move aaa to the top
+		require.True(t, ok)
+		_ = c.Set("ccc", 300)
+
+		first, ok := c.Get("ccc")
+		require.True(t, ok)
+		require.Equal(t, 300, first)
+
+		second, ok := c.Get("aaa")
+		require.True(t, ok)
+		require.Equal(t, 100, second)
+
+		removed, ok := c.Get("bbb")
+		require.False(t, ok)
+		require.Nil(t, removed)
+	})
+
+	t.Run("purge less last active by update logic", func(t *testing.T) {
+		c := NewCache(2)
+
+		_ = c.Set("aaa", 100)
+		_ = c.Set("bbb", 200)
+		ok := c.Set("aaa", 110) // move aaa to the top and update its value to 110
+		require.True(t, ok)
+		_ = c.Set("ccc", 300)
+
+		first, ok := c.Get("ccc")
+		require.True(t, ok)
+		require.Equal(t, 300, first)
+
+		second, ok := c.Get("aaa")
+		require.True(t, ok)
+		require.Equal(t, 110, second)
+
+		removed, ok := c.Get("bbb")
+		require.False(t, ok)
+		require.Nil(t, removed)
+	})
+
+	t.Run("clear cache", func(t *testing.T) {
+		c := NewCache(10)
+
+		_ = c.Set("aaa", 100)
+		_ = c.Set("bbb", 200)
+
+		c.Clear()
+
+		_, ok := c.Get("aaa")
+		require.False(t, ok)
+
+		_, ok = c.Get("bbb")
+		require.False(t, ok)
+	})
 }
 
-func TestCacheMultithreading(t *testing.T) {
-	t.Skip() // Remove me if task with asterisk completed.
+func TestCacheMultithreading(_ *testing.T) {
+	// t.Skip() // Remove me if task with asterisk completed.
 
 	c := NewCache(10)
 	wg := &sync.WaitGroup{}

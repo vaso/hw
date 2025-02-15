@@ -85,8 +85,12 @@ func (l *list) PushBack(v interface{}) *ListItem {
 func (l *list) Remove(i *ListItem) {
 	prevItem := i.Prev
 	nextItem := i.Next
-	prevItem.Next = nextItem
-	nextItem.Prev = prevItem
+	if prevItem != nil {
+		prevItem.Next = nextItem // non-first item removal
+	}
+	if nextItem != nil {
+		nextItem.Prev = prevItem // non-last item removal
+	}
 	l.len--
 }
 
@@ -100,6 +104,9 @@ func (l *list) MoveToFront(i *ListItem) {
 	prevItem.Next = nextItem
 	if nextItem != nil {
 		nextItem.Prev = prevItem
+	} else {
+		// last item was moved to front, update last pointer
+		l.last = prevItem
 	}
 
 	firstItem := l.first

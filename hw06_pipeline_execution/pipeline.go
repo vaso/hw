@@ -26,6 +26,7 @@ func stageWithDone(in In, done In, stage Stage) Out {
 			case <-done:
 				go func() {
 					for range in {
+						_ = 0
 					}
 				}()
 				return

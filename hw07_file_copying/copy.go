@@ -17,6 +17,10 @@ var (
 func Copy(fromPath, toPath string, offset, limit int64) error {
 	buffSize := 1024
 
+	if offset < 0 || limit < 0 {
+		return errors.New("negative offset or limit values")
+	}
+
 	// open input file
 	inputFile, err := os.Open(fromPath)
 	defer func() {
@@ -46,12 +50,6 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		return err
 	}
 
-	//// check if output file exists
-	// existingToFileInfo, err := os.Stat(toPath)
-	// if err == nil && existingToFileInfo.Size() > 0 {
-	//	 log.Fatalf("error writing to existing file: %s", toPath)
-	// }
-
 	// init output file
 	outputFile, err := os.Create(toPath)
 	defer func() {
@@ -71,7 +69,9 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	}
 
 	wg := sync.WaitGroup{}
-	progressChan := initPB(restSize, &wg)
+
+	progressChan := make(chan int64, 1)
+	initPB(restSize, progressChan, &wg)
 
 	copySize := restSize
 	for copySize > 0 {
@@ -89,6 +89,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 		}
 		updatePB(copySize, progressChan)
 	}
+
 	close(progressChan)
 	wg.Wait()
 	finishPB()
@@ -97,33 +98,15 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 	return nil
 }
 
-func initPB(restSize int64, wg *sync.WaitGroup) chan int64 {
-	// totalStagesCount := int64(40)
-	progressChan := make(chan int64, 1)
-
+func initPB(restSize int64, progressChan chan int64, wg *sync.WaitGroup) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		// curUndoneStagesCount := int64(0)
 		for restSizeVal := range progressChan {
 			completedPercent := 100.0 * float64(restSize-restSizeVal) / float64(restSize)
-			fmt.Printf("\rcompleted - %.2f%%", completedPercent)
-
-			// undoneStagesCount := int64(math.Ceil((float64(restSizeVal) / float64(restSize)) * float64(totalStagesCount)))
-			// if curUndoneStagesCount == undoneStagesCount {
-			//   continue
-			// }
-			// curUndoneStagesCount = undoneStagesCount
-			// doneStagesCount := totalStagesCount - curUndoneStagesCount
-			// doneStr := strings.Repeat("+", int(doneStagesCount))
-			// undoneStr := strings.Repeat("_", int(undoneStagesCount))
-			//			fmt.Printf("\rstatus: [%s%s]", doneStr, undoneStr)
-			// fmt.Printf("status: [done - %d, undone - %d]\n", doneStagesCount, curUndoneStagesCount)
-			//			fmt.Printf("status: [undone - %d]\n", restSizeVal)
+			displayCurrentPBStatus(completedPercent)
 		}
 	}()
-
-	return progressChan
 }
 
 func updatePB(copySize int64, pbChan chan int64) {
@@ -134,5 +117,9 @@ func updatePB(copySize int64, pbChan chan int64) {
 }
 
 func finishPB() {
-	fmt.Printf("\rcompleted - %.2f%%", 100.0)
+	displayCurrentPBStatus(100.0)
+}
+
+func displayCurrentPBStatus(completedPercent float64) {
+	fmt.Printf("\rcompleted - %.2f%%", completedPercent)
 }

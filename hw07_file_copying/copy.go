@@ -9,14 +9,14 @@ import (
 	"sync"
 )
 
+const BuffSize = 10
+
 var (
 	ErrUnsupportedFile       = errors.New("unsupported file")
 	ErrOffsetExceedsFileSize = errors.New("offset exceeds file size")
 )
 
 func Copy(fromPath, toPath string, offset, limit int64) error {
-	buffSize := 1024
-
 	if offset < 0 || limit < 0 {
 		return errors.New("negative offset or limit values")
 	}
@@ -75,7 +75,7 @@ func Copy(fromPath, toPath string, offset, limit int64) error {
 
 	copySize := restSize
 	for copySize > 0 {
-		length := math.Min(float64(buffSize), float64(copySize))
+		length := math.Min(float64(BuffSize), float64(copySize))
 		n, err := io.CopyN(outputFile, inputFileSeeker, int64(length))
 		if err != nil && !errors.Is(err, io.EOF) {
 			return err

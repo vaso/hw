@@ -4,13 +4,14 @@ import (
 	"errors"
 	"log"
 	"sync"
+	"sync/atomic"
 )
 
 var ErrErrorsLimitExceeded = errors.New("errors limit exceeded")
 
 type Task func() error
 
-var errCount int
+var errCount atomic.Int32
 
 // Run starts tasks in n goroutines and stops its work when receiving m errors from tasks.
 func Run(tasks []Task, n int, m int) error {
@@ -19,11 +20,9 @@ func Run(tasks []Task, n int, m int) error {
 	}
 
 	wg := sync.WaitGroup{}
-	mu := sync.Mutex{}
-
 	tChan := make(chan Task)          // channel with array of tasks to complete
 	errChan := make(chan struct{}, 1) // flag to stop all go routines due to error limit exceeding
-	errCount = 0
+	errCount.Store(0)
 
 	log.Println("start Run")
 
@@ -36,12 +35,12 @@ func Run(tasks []Task, n int, m int) error {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			consumer(tChan, errChan, &mu, m)
+			consumer(tChan, errChan, int32(m))
 		}()
 	}
 	wg.Wait()
 	close(errChan)
-	if errCount >= m {
+	if errCount.Load() >= int32(m) {
 		return ErrErrorsLimitExceeded
 	}
 	return nil
@@ -68,7 +67,7 @@ func writeToErrChan(errChan chan struct{}) {
 	}
 }
 
-func consumer(tChan <-chan Task, errChan chan struct{}, mu *sync.Mutex, maxErrCount int) {
+func consumer(tChan <-chan Task, errChan chan struct{}, maxErrCount int32) {
 	for {
 		select {
 		case <-errChan:
@@ -83,11 +82,8 @@ func consumer(tChan <-chan Task, errChan chan struct{}, mu *sync.Mutex, maxErrCo
 				continue
 			}
 
-			mu.Lock()
-			errCount++
-			localErrCounter := errCount
-			mu.Unlock()
-			if localErrCounter >= maxErrCount {
+			errCount.Add(int32(1))
+			if errCount.Load() >= maxErrCount {
 				writeToErrChan(errChan)
 				return
 			}

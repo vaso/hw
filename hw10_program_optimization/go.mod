@@ -1,6 +1,6 @@
 module github.com/vaso/hw/hw10_program_optimization
 
-go 1.23.0
+go 1.22.0
 
 require (
 	github.com/mailru/easyjson v0.9.0

@@ -20,8 +20,7 @@ func Run(tasks []Task, n int, m int) error {
 	}
 
 	wg := sync.WaitGroup{}
-	tChan := make(chan Task)          // channel with array of tasks to complete
-	errChan := make(chan struct{}, 1) // flag to stop all go routines due to error limit exceeding
+	tChan := make(chan Task) // channel with array of tasks to complete
 	errCount.Store(0)
 
 	log.Println("start Run")
@@ -29,64 +28,53 @@ func Run(tasks []Task, n int, m int) error {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		producer(tasks, tChan, errChan)
+		producer(tasks, tChan, int32(m))
 	}()
 	for i := 0; i < n; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			consumer(tChan, errChan, int32(m))
+			consumer(tChan, int32(m))
 		}()
 	}
 	wg.Wait()
-	close(errChan)
 	if errCount.Load() >= int32(m) {
 		return ErrErrorsLimitExceeded
 	}
 	return nil
 }
 
-func producer(tasks []Task, tChan chan<- Task, errChan chan struct{}) {
+func producer(tasks []Task, tChan chan<- Task, maxErrCount int32) {
 	for _, task := range tasks {
-		select {
-		case <-errChan: // read errChan for exit flag
+		if errCount.Load() >= maxErrCount {
 			close(tChan) // closing tasks channel is a flag for all consumers to stop.
 			return
-		case tChan <- task: // send task to tChan, blocking
-			continue
 		}
+
+		tChan <- task
 	}
 	close(tChan)
 }
 
-// push err flag to errChan. If it already has a flag, no need to push it again.
-func writeToErrChan(errChan chan struct{}) {
-	select {
-	case errChan <- struct{}{}:
-	default:
-	}
-}
-
-func consumer(tChan <-chan Task, errChan chan struct{}, maxErrCount int32) {
+func consumer(tChan <-chan Task, maxErrCount int32) {
 	for {
-		select {
-		case <-errChan:
-			writeToErrChan(errChan) // we read err flag, but we need to re-enable it until producer gets it.
+		task, ok := <-tChan
+		if !ok {
 			return
-		case task, ok := <-tChan: // read task to execute, handle task
-			if !ok {
-				return
-			}
-			err := task()
-			if err == nil {
-				continue
-			}
+		}
 
-			errCount.Add(int32(1))
-			if errCount.Load() >= maxErrCount {
-				writeToErrChan(errChan)
-				return
+		err := task()
+		if err == nil {
+			continue
+		}
+
+		errCount.Add(int32(1))
+		if errCount.Load() >= maxErrCount {
+			select {
+			case <-tChan: // read from tChan to release producer for next iteration
+			default:
 			}
+			return
 		}
 	}
 }

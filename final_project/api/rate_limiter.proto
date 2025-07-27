@@ -1,0 +1,36 @@
+syntax="proto3";
+
+package rate_limiter;
+option go_package = "./;pb";
+
+import "google/protobuf/empty.proto";
+
+service RateLimiterService {
+  rpc Allow(LoginRequest) returns (LoginResponse) {}
+  rpc ResetBucket(ResetRequest) returns (google.protobuf.Empty) {}
+  rpc AddIPToBlackList(IPRequest) returns (google.protobuf.Empty) {}
+  rpc RemoveIPFromBlackList(IPRequest) returns (google.protobuf.Empty) {}
+  rpc AddIPToWhiteList(IPRequest) returns (google.protobuf.Empty) {}
+  rpc RemoveIPFromWhiteList(IPRequest) returns (google.protobuf.Empty) {}
+}
+
+message LoginRequest {
+  string login = 1;
+  string password = 2;
+  string IP = 3;
+}
+
+message LoginResponse {
+  bool ok = 1;
+}
+
+message ResetRequest {
+  string login = 1;
+  string IP = 3;
+}
+
+message EmptyResponse {}
+
+message IPRequest {
+  string IP = 1;
+}

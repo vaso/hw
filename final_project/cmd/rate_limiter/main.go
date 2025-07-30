@@ -29,13 +29,15 @@ func main() {
 	fmt.Printf("envConfig: %+v\n", envConfig)
 	appConfig := *config.GetAppConfig(*envConfig)
 	fmt.Printf("appConfig: %+v\n", appConfig)
-	appService, err := service.NewService(context.Background(), appConfig)
+	ctx := context.Background()
+	appService, err := service.NewService(ctx, appConfig)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	grpcHost := fmt.Sprintf(":%d", envConfig.Grpc.Port)
-	lsn, err := net.Listen("tcp", grpcHost)
+	var lc net.ListenConfig
+	lsn, err := lc.Listen(ctx, "tcp", grpcHost)
 	if err != nil {
 		log.Fatal(err)
 	}

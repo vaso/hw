@@ -4,23 +4,23 @@ import (
 	"context"
 	"fmt"
 	"log"
+
+	"github.com/jmoiron/sqlx"
 	"rate_limiter/config"
 
 	_ "github.com/jackc/pgx/v5/stdlib" // This line registers the "pgx" driver
-	"github.com/jmoiron/sqlx"
 )
 
 type ListRepository struct {
 	dsn string
 	db  *sqlx.DB
-	ctx context.Context
 }
 
 type IPRecord struct {
 	IP string
 }
 
-func NewListRepository(ctx context.Context, config config.EnvConfig) (*ListRepository, error) {
+func NewListRepository(config config.EnvConfig) (*ListRepository, error) {
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s",
 		config.DB.User,
 		config.DB.Pass,
@@ -30,7 +30,6 @@ func NewListRepository(ctx context.Context, config config.EnvConfig) (*ListRepos
 	)
 	repo := ListRepository{
 		dsn: dsn,
-		ctx: ctx,
 	}
 	err := repo.connect()
 	if err != nil {
@@ -40,16 +39,16 @@ func NewListRepository(ctx context.Context, config config.EnvConfig) (*ListRepos
 	return &repo, nil
 }
 
-func (r *ListRepository) GetWhitelist() ([]string, error) {
-	return r.getList("select ip from whitelist")
+func (r *ListRepository) GetWhitelist(ctx context.Context) ([]string, error) {
+	return r.getList(ctx, "select ip from whitelist")
 }
 
-func (r *ListRepository) GetBlacklist() ([]string, error) {
-	return r.getList("select ip from blacklist")
+func (r *ListRepository) GetBlacklist(ctx context.Context) ([]string, error) {
+	return r.getList(ctx, "select ip from blacklist")
 }
 
-func (r *ListRepository) getList(query string) ([]string, error) {
-	rows, err := r.db.QueryxContext(r.ctx, query)
+func (r *ListRepository) getList(ctx context.Context, query string) ([]string, error) {
+	rows, err := r.db.QueryxContext(ctx, query)
 	if err != nil {
 		return []string{}, err
 	}
@@ -64,32 +63,31 @@ func (r *ListRepository) getList(query string) ([]string, error) {
 		}
 		list = append(list, ip.IP)
 	}
-
 	return list, nil
 }
 
-func (r *ListRepository) AddToWhitelist(network string) error {
+func (r *ListRepository) AddToWhitelist(ctx context.Context, network string) error {
 	query := "insert into whitelist(ip) values ($1)"
-	res, err := r.db.ExecContext(r.ctx, query, network)
+	res, err := r.db.ExecContext(ctx, query, network)
 	log.Printf("Add To WL DB: %+v", res)
 	return err
 }
 
-func (r *ListRepository) AddToBlacklist(network string) error {
+func (r *ListRepository) AddToBlacklist(ctx context.Context, network string) error {
 	query := "insert into blacklist(ip) values ($1)"
-	_, err := r.db.ExecContext(r.ctx, query, network)
+	_, err := r.db.ExecContext(ctx, query, network)
 	return err
 }
 
-func (r *ListRepository) RemoveFromWhitelist(network string) error {
+func (r *ListRepository) RemoveFromWhitelist(ctx context.Context, network string) error {
 	query := "delete from whitelist where ip = $1"
-	_, err := r.db.ExecContext(r.ctx, query, network)
+	_, err := r.db.ExecContext(ctx, query, network)
 	return err
 }
 
-func (r *ListRepository) RemoveFromBlacklist(network string) error {
+func (r *ListRepository) RemoveFromBlacklist(ctx context.Context, network string) error {
 	query := "delete from blacklist where ip = $1"
-	_, err := r.db.ExecContext(r.ctx, query, network)
+	_, err := r.db.ExecContext(ctx, query, network)
 	return err
 }
 

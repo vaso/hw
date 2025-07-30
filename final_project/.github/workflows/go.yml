@@ -8,7 +8,7 @@ on:
 env:
   GO111MODULE: "on"
   GOLANG_VERSION: ~1.23
-  GOLANGCI_LINT_VERSION: v1.63.4
+  GOLANGCI_LINT_VERSION: v2.3.0
 
 jobs:
   lint:
@@ -47,11 +47,6 @@ jobs:
 
       - name: Unit tests
         run: go test -v -count=1 -race -timeout=1m ./...
-        working-directory: ${{ env.BRANCH }}
-
-      - name: Optimization tests
-        run: go test -v -count=1 -timeout=1m -tags bench ./...
-        if: env.BRANCH == 'hw10_program_optimization'
         working-directory: ${{ env.BRANCH }}
 
       - name: Bash tests

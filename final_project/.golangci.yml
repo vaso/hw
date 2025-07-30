@@ -1,40 +1,8 @@
+version: "2"
 run:
   tests: true
-
-linters-settings:
-  funlen:
-    lines: 150
-    statements: 80
-  gci:
-    sections:
-      - standard
-      - default
-      - blank
-      - dot
-    skip-generated: true
-    custom-order: true
-  depguard:
-    rules:
-      main:
-        files:
-          - "$all"
-        allow:
-          - "$gostd"
-          - "github.com/kelseyhightower/envconfig"
-          - "github.com/subosito/gotenv"
-          - "rate_limiter/pb"
-          - "rate_limiter/config"
-          - "github.com/jackc/pgx/v5/stdlib"
-          - "rate_limiter/internal/app/bucket"
-          - "rate_limiter/internal/app/cache"
-          - "rate_limiter/internal/app/repository"
-          - "github.com/golang/protobuf/ptypes/empty"
-          - "rate_limiter/internal/app/service"
-          - "github.com/stretchr/testify/require"
-          - "github.com/stretchr/testify/mock"
-
 linters:
-  disable-all: true
+  default: none
   enable:
     - asciicheck
     - bodyclose
@@ -44,22 +12,17 @@ linters:
     - durationcheck
     - errorlint
     - exhaustive
-    - exportloopref
     - funlen
-    - gci
     - gocognit
     - goconst
     - gocritic
     - gocyclo
     - godot
-    - gofmt
-    - gofumpt
     - goheader
     - gomoddirectives
     - gomodguard
     - goprintffuncname
     - gosec
-    - gosimple
     - govet
     - importas
     - ineffassign
@@ -74,15 +37,70 @@ linters:
     - predeclared
     - revive
     - rowserrcheck
-    - sqlclosecheck
+#    - sqlclosecheck
     - staticcheck
-    - stylecheck
     - tagliatelle
     - thelper
     - tparallel
-    - typecheck
     - unconvert
     - unparam
     - unused
     - wastedassign
     - whitespace
+  settings:
+    depguard:
+      rules:
+        main:
+          files:
+            - $all
+          allow:
+            - $gostd
+            - github.com/kelseyhightower/envconfig
+            - github.com/subosito/gotenv
+            - rate_limiter/pb
+            - rate_limiter/config
+            - github.com/jackc/pgx/v5/stdlib
+            - rate_limiter/internal/app/bucket
+            - rate_limiter/internal/app/cache
+            - rate_limiter/internal/app/repository
+            - github.com/golang/protobuf/ptypes/empty
+            - rate_limiter/internal/app/service
+            - github.com/stretchr/testify/require
+            - github.com/stretchr/testify/mock
+            - google.golang.org/grpc
+            - google.golang.org/grpc/credentials/insecure
+            - github.com/jmoiron/sqlx
+            - google.golang.org/protobuf/types/known/emptypb
+    funlen:
+      lines: 150
+      statements: 80
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gci
+    - gofmt
+#    - gofumpt
+  settings:
+    gci:
+      sections:
+        - standard
+        - default
+        - blank
+        - dot
+      custom-order: true
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

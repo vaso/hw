@@ -16,13 +16,13 @@ type RateLimiterService struct {
 }
 
 func NewRateLimiterService(ctx context.Context, config config.AppConfig) (*RateLimiterService, error) {
-	repo, err := repository.NewListRepository(ctx, config.EnvConfig)
+	repo, err := repository.NewListRepository(config.EnvConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	config.IPWhitelist, _ = repo.GetWhitelist()
-	config.IPBlacklist, _ = repo.GetBlacklist()
+	config.IPWhitelist, _ = repo.GetWhitelist(ctx)
+	config.IPBlacklist, _ = repo.GetBlacklist(ctx)
 	fmt.Printf("updated Config: %+v\n", config)
 	ipService, err := NewIPService(config)
 	if err != nil {
@@ -37,6 +37,7 @@ func NewRateLimiterService(ctx context.Context, config config.AppConfig) (*RateL
 }
 
 func (r *RateLimiterService) Check(ctx context.Context, login, pass, ip string) bool {
+	_ = ctx
 	res, err := r.iPService.IsInWhitelist(ip)
 	if err != nil {
 		return false
@@ -68,7 +69,7 @@ func (r *RateLimiterService) AddToBlacklist(ctx context.Context, networkStr stri
 		return false, nil
 	}
 
-	err = r.listRepository.AddToBlacklist(networkStr)
+	err = r.listRepository.AddToBlacklist(ctx, networkStr)
 	if err != nil {
 		return false, err
 	}
@@ -85,7 +86,7 @@ func (r *RateLimiterService) RemoveFromBlacklist(ctx context.Context, networkStr
 		return false, nil
 	}
 
-	err = r.listRepository.RemoveFromBlacklist(networkStr)
+	err = r.listRepository.RemoveFromBlacklist(ctx, networkStr)
 	if err != nil {
 		return false, err
 	}
@@ -102,7 +103,7 @@ func (r *RateLimiterService) AddToWhitelist(ctx context.Context, networkStr stri
 		return false, nil
 	}
 	log.Printf("Whitelist: %+v", r.iPService.Whitelist)
-	err = r.listRepository.AddToWhitelist(networkStr)
+	err = r.listRepository.AddToWhitelist(ctx, networkStr)
 	if err != nil {
 		return false, err
 	}
@@ -119,7 +120,7 @@ func (r *RateLimiterService) RemoveFromWhitelist(ctx context.Context, networkStr
 		return false, nil
 	}
 
-	err = r.listRepository.RemoveFromWhitelist(networkStr)
+	err = r.listRepository.RemoveFromWhitelist(ctx, networkStr)
 	if err != nil {
 		return false, err
 	}
@@ -128,6 +129,7 @@ func (r *RateLimiterService) RemoveFromWhitelist(ctx context.Context, networkStr
 }
 
 func (r *RateLimiterService) ResetBucket(ctx context.Context, login, ip string) {
+	_ = ctx
 	r.bucketService.ResetByLogin(login)
 	r.bucketService.ResetByIP(ip)
 }

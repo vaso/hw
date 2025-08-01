@@ -2,12 +2,12 @@
 set -xeuo pipefail
 
 go build -o go-telnet
-nc_out=nc3.out
-telnet_out=telnet3.out
+nc_out=nc.out
+telnet_out=telnet.out
 port=$(shuf -i 40000-50000 -n 1)
 
-rm -f ${nc_out}
-rm -f ${telnet_out}
+rm ${nc_out}
+rm ${telnet_out}
 
 (echo -e "Hello\nFrom\nNC\n" && cat 2>/dev/null) | nc -l localhost ${port} > ${nc_out} &
 NC_PID=$!
@@ -33,7 +33,7 @@ expected_telnet_out=$'Hello\nFrom\nNC'
 fileEquals ${telnet_out} "${expected_telnet_out}"
 
 rm -f go-telnet
-rm -f ${nc_out}
-rm -f ${telnet_out}
+rm ${nc_out}
+rm ${telnet_out}
 
 echo "PASS"

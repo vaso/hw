@@ -2,8 +2,8 @@
 set -xeuo pipefail
 
 go build -o go-telnet
-nc_out=nc1.out
-telnet_out=telnet1.out
+nc_out=nc2.out
+telnet_out=telnet2.out
 rm -f ${nc_out}
 rm -f ${telnet_out}
 

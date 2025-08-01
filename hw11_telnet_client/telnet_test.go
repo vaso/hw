@@ -64,7 +64,7 @@ func TestTelnetClient(t *testing.T) {
 	})
 
 	t.Run("incorrect client port", func(t *testing.T) {
-		l, err := net.Listen("tcp", "127.0.0.1:2235")
+		l, err := net.Listen("tcp", "127.0.0.1:33333")
 		require.NoError(t, err)
 		defer func() { require.NoError(t, l.Close()) }()
 
@@ -73,10 +73,10 @@ func TestTelnetClient(t *testing.T) {
 		timeout, err := time.ParseDuration("10s")
 		require.NoError(t, err)
 
-		client := NewTelnetClient("127.0.0.1:2236", timeout, io.NopCloser(in), out)
+		client := NewTelnetClient("127.0.0.1:44444", timeout, io.NopCloser(in), out)
 		err = client.Connect()
 
 		require.Error(t, err)
-		require.Equal(t, err.Error(), "connection error: dial tcp 127.0.0.1:2236: connect: connection refused")
+		require.Equal(t, err.Error(), "connection error: dial tcp 127.0.0.1:44444: connect: connection refused")
 	})
 }

@@ -2,16 +2,18 @@
 set -xeuo pipefail
 
 go build -o go-telnet
-nc_out=nc2.out
-telnet_out=telnet2.out
+nc_out=nc3.out
+telnet_out=telnet3.out
+port=$(shuf -i 40000-50000 -n 1)
+
 rm -f ${nc_out}
 rm -f ${telnet_out}
 
-(echo -e "Hello\nFrom\nNC\n" && cat 2>/dev/null) | nc -l localhost 35353 > ${nc_out} &
+(echo -e "Hello\nFrom\nNC\n" && cat 2>/dev/null) | nc -l localhost ${port} > ${nc_out} &
 NC_PID=$!
 
 sleep 1
-(echo -e "I\nam\nTELNET client\n" && cat 2>/dev/null) | ./go-telnet --timeout=5s localhost 35353 > ${telnet_out} &
+(echo -e "I\nam\nTELNET client\n" && cat 2>/dev/null) | ./go-telnet --timeout=5s localhost ${port} > ${telnet_out} &
 TL_PID=$!
 
 sleep 5

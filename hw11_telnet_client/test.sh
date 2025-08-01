@@ -6,8 +6,8 @@ nc_out=nc.out
 telnet_out=telnet.out
 port=$(shuf -i 40000-50000 -n 1)
 
-rm ${nc_out}
-rm ${telnet_out}
+rm -f ${nc_out}
+rm -f ${telnet_out}
 
 (echo -e "Hello\nFrom\nNC\n" && cat 2>/dev/null) | nc -l localhost ${port} > ${nc_out} &
 NC_PID=$!
@@ -23,7 +23,7 @@ kill ${NC_PID} 2>/dev/null || true
 function fileEquals() {
   local fileData
   fileData=$(cat "$1")
-  [ "${fileData}" = "${2}" ] || (echo -e "unexpected output, $1:\n${fileData}:\n${2}" && ls -lsa $1 && cat "$1" && rm -f $1 && exit 1)
+  [ "${fileData}" = "${2}" ] || (echo -e "unexpected output, $1:\n${fileData}:\n${2}" && ls -lsa $1 && cat "$1" && exit 1)
 }
 
 expected_nc_out=$'I\nam\nTELNET client'
@@ -33,7 +33,7 @@ expected_telnet_out=$'Hello\nFrom\nNC'
 fileEquals ${telnet_out} "${expected_telnet_out}"
 
 rm -f go-telnet
-rm ${nc_out}
-rm ${telnet_out}
+rm -f ${nc_out}
+rm -f ${telnet_out}
 
 echo "PASS"

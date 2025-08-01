@@ -17,17 +17,13 @@ kill ${NC_PID} 2>/dev/null || true
 function fileEquals() {
   local fileData
   fileData=$(cat "$1")
-  [ "${fileData}" = "${2}" ] || (echo -e "unexpected output, $1:\n${fileData}" && exit 1)
+  [ "${fileData}" = "${2}" ] || (echo -e "unexpected output, $1:\n${fileData}:\n${2}" && exit 1)
 }
 
-expected_nc_out='I
-am
-TELNET client'
+expected_nc_out=$'I\nam\nTELNET client'
 fileEquals /tmp/nc.out "${expected_nc_out}"
 
-expected_telnet_out='Hello
-From
-NC'
+expected_telnet_out=$'Hello\nFrom\nNC'
 fileEquals /tmp/telnet.out "${expected_telnet_out}"
 
 rm -f go-telnet

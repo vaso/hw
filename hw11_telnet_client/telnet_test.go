@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/require" //nolint:depguard
 )
 
 func TestTelnetClient(t *testing.T) {
@@ -61,5 +61,21 @@ func TestTelnetClient(t *testing.T) {
 		}()
 
 		wg.Wait()
+	})
+
+	t.Run("incorrect client port", func(t *testing.T) {
+		l, err := net.Listen("tcp", "127.0.0.1:2235")
+		require.NoError(t, err)
+		defer func() { require.NoError(t, l.Close()) }()
+
+		in := &bytes.Buffer{}
+		out := &bytes.Buffer{}
+		timeout, _ := time.ParseDuration("10s")
+
+		client := NewTelnetClient("127.0.0.1:2236", timeout, io.NopCloser(in), out)
+		err = client.Connect()
+
+		require.Error(t, err)
+		require.Equal(t, err.Error(), "connection error: dial tcp 127.0.0.1:2236: connect: connection refused")
 	})
 }

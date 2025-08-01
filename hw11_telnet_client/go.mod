@@ -1,6 +1,6 @@
 module github.com/vaso/hw/hw11_telnet_client
 
-go 1.23.0
+go 1.22.1
 
 require github.com/stretchr/testify v1.7.0
 

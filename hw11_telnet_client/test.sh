@@ -2,14 +2,14 @@
 set -xeuo pipefail
 
 go build -o go-telnet
-nc_out_file=$(mktemp)
-telnet_out_file=$(mktemp)
+rm -f nc.out
+rm -f telnet.out
 
-(echo -e "Hello\nFrom\nNC\n" && cat 2>/dev/null) | nc -l localhost 4242 > ${nc_out_file} &
+(echo -e "Hello\nFrom\nNC\n" && cat 2>/dev/null) | nc -l localhost 4242 > nc.out &
 NC_PID=$!
 
 sleep 1
-(echo -e "I\nam\nTELNET client\n" && cat 2>/dev/null) | ./go-telnet --timeout=5s localhost 4242 > ${telnet_out_file} &
+(echo -e "I\nam\nTELNET client\n" && cat 2>/dev/null) | ./go-telnet --timeout=5s localhost 4242 > telnet.out &
 TL_PID=$!
 
 sleep 5
@@ -25,12 +25,12 @@ function fileEquals() {
 expected_nc_out='I
 am
 TELNET client'
-fileEquals ${nc_out_file} "${expected_nc_out}"
+fileEquals nc.out "${expected_nc_out}"
 
 expected_telnet_out='Hello
 From
 NC'
-fileEquals ${telnet_out_file} "${expected_telnet_out}"
+fileEquals telnet.out "${expected_telnet_out}"
 
 rm -f go-telnet
 echo "PASS"

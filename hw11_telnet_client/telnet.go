@@ -43,6 +43,9 @@ func (c *client) Connect() error {
 }
 
 func (c *client) Close() error {
+	if c.connect == nil {
+		return errors.New("empty Connection")
+	}
 	return c.connect.Close()
 }
 

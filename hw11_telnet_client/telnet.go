@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	"errors"
 	"io"
 	"log"
@@ -48,38 +47,35 @@ func (c *client) Close() error {
 }
 
 func (c *client) Send() error {
-	reader := bufio.NewReader(c.in)
-	for {
-		lineBytes, err := reader.ReadBytes('\n')
-		if errors.Is(err, io.EOF) {
-			log.Println("...EOF")
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-
-		_, err = c.connect.Write(lineBytes)
-		if err != nil {
-			return err
-		}
+	if c.connect == nil {
+		return errors.New("empty Connection")
 	}
+
+	_, err := io.Copy(c.connect, c.in)
+	if errors.Is(err, io.EOF) {
+		log.Println("...EOF")
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *client) Receive() error {
-	reader := bufio.NewReader(c.connect)
-	for {
-		lineBytes, err := reader.ReadBytes('\n')
-		if errors.Is(err, io.EOF) {
-			log.Println("...Connection was closed by peer")
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		_, err = c.out.Write(lineBytes)
-		if err != nil {
-			return err
-		}
+	if c.connect == nil {
+		return errors.New("empty Connection")
 	}
+
+	_, err := io.Copy(c.out, c.connect)
+	if errors.Is(err, io.EOF) {
+		log.Println("...Connection was closed by peer")
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
